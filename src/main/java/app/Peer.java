@@ -1,5 +1,8 @@
 package app;
 
+import exceptions.SendFileFailedException;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -64,13 +67,27 @@ public class Peer extends Thread {
 
     }
 
-    public void closeToPeer(PeerInfo peer)
+    public void closeToPeer(PeerInfo peerInfo)
     {
-        PeerConnection outConnection= outMap.get(peer);
+        PeerConnection outConnection= outMap.get(peerInfo);
         if (outConnection!=null) {
             outConnection.send("exit");
             outConnection.close();
-            outMap.remove(peer);
+            outMap.remove(peerInfo);
+        }
+    }
+    public void sendFileToPeer(PeerInfo peerInfo,String root, String filename) throws SendFileFailedException
+    {
+        PeerConnection outConnection= outMap.get(peerInfo);
+        if(outConnection!=null)
+        {
+            outConnection.send("file");
+            outConnection.sendFile(new File(root+filename));
+            String confirmations=outConnection.recvString();
+            if (!confirmations.equals("done"))
+            {
+               throw  new SendFileFailedException("send file failed");
+            }
         }
     }
 
@@ -85,40 +102,5 @@ public class Peer extends Thread {
     }
 
 
-    public static void main(String[] args) {
-        try {
-            InetAddress host = InetAddress.getLocalHost();
-            System.out.println(host.toString());
 
-            Scanner scanner = new Scanner(System. in);
-            String inputString = scanner. nextLine();
-            int port = Integer.parseInt(inputString);
-
-            PeerInfo pi = new PeerInfo(1,port,host);
-
-
-            Peer peer1= new Peer (pi);
-            peer1.start();
-
-            inputString = scanner. nextLine();
-            port = Integer.parseInt(inputString);
-            inputString = scanner. nextLine();
-            InetAddress inetAddress = InetAddress.getByName(inputString);
-
-
-            PeerInfo pi2  = new PeerInfo(1,port,inetAddress);
-            peer1.connectToPeer(pi2);
-
-            peer1.sendToAllPeers(null);
-            peer1.closeToPeer(pi2);
-
-            peer1.join();
-
-        } catch (UnknownHostException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-
-
-    }
 }
