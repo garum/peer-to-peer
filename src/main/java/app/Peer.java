@@ -86,7 +86,7 @@ public class Peer extends Thread {
             String confirmations=outConnection.recvString();
             if (!confirmations.equals("done"))
             {
-                throw  new SendFileFailedException("send file failed");
+               throw  new SendFileFailedException("send file failed");
             }
         }
     }
